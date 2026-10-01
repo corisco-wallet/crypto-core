@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: fmt
+        run: cargo fmt --check
+      # Not --all-features: `hw-sha512` depends on esp-idf-sys, which only
+      # builds against the ESP-IDF/Xtensa target, not this host runner.
+      - name: clippy
+        run: cargo clippy --features seed-lock,transfer-crypto --all-targets -- -D warnings
+      - name: test
+        run: cargo test --features seed-lock,transfer-crypto
