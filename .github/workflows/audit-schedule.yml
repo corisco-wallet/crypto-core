@@ -6,6 +6,11 @@ on:
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
+# rustsec/audit-check reports results as a check run.
+permissions:
+  contents: read
+  checks: write
+
 jobs:
   audit:
     runs-on: ubuntu-latest
