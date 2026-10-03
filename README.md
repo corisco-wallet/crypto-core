@@ -1,12 +1,12 @@
 # crypto-core
 
-Platform-agnostic signing logic for [corisco-wallet](https://github.com/corisco-wallet/corisco-wallet)'s
+Platform-agnostic signing logic for [corisco-firmware](https://github.com/corisco-wallet/corisco-firmware)'s
 ESP32 hardware signer: BIP32 derivation, BIP39 mnemonic handling, ECDSA/
 Schnorr signing, FROST threshold signing, and the leaf-ownership-transfer
 "key tweak" crypto (Feldman VSS + ECIES) Spark's protocol needs.
 
 Pure Rust, no hardware dependency by default -- builds and tests on any
-normal host. `corisco-wallet`'s firmware wraps this crate to run the same
+normal host. The `corisco-firmware` repo wraps this crate to run the same
 logic on real hardware.
 
 ## Feature flags
@@ -33,7 +33,7 @@ else here is host-testable -- no cross-compilation toolchain needed.
 
 ## Where this is used
 
-See [corisco-wallet](https://github.com/corisco-wallet/corisco-wallet)'s
+See [corisco-firmware](https://github.com/corisco-wallet/corisco-firmware)'s
 `docs/architecture.md` for how this fits into the full signing flow
 (mobile app <-> BLE <-> ESP32 signer).
 
