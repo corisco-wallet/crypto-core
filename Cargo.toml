@@ -1,9 +1,9 @@
 [package]
-name = "signer-core"
+name = "corisco-crypto-core"
 version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-description = "Platform-agnostic crypto core for the Spark on-device signer. Builds and tests on a normal host; gets wrapped by esp32-firmware for the actual device."
+description = "Platform-agnostic crypto core for the Spark on-device signer. Builds and tests on a normal host; gets wrapped by firmware-core for the actual device."
 
 [dependencies]
 bip39 = { version = "2", default-features = false, features = ["std"] }
@@ -33,7 +33,7 @@ rand_core = { version = "0.6", features = ["getrandom"] }
 
 # Optional: routes PBKDF2's inner HMAC-SHA512 through ESP-IDF's mbedtls,
 # which uses the ESP32-S3's hardware SHA accelerator. Only ever enabled by
-# esp32-firmware; host builds/tests never pull this in.
+# the firmware; host builds/tests never pull this in.
 esp-idf-sys = { version = "0.37", optional = true }
 log = { version = "0.4", optional = true }
 

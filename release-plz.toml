@@ -1,0 +1,6 @@
+[workspace]
+# Distributed as a git dependency pinned by tag, not via crates.io.
+publish = false
+git_release_enable = true
+git_tag_name = "v{{ version }}"
+changelog_update = true

@@ -7,7 +7,7 @@
 //! once at wallet creation), so it needs to land well under a second;
 //! PBKDF2-HMAC-SHA256 with a caller-chosen, much smaller round count is used
 //! instead. The PIN's real defense against brute force is the device-side
-//! attempt counter / wipe policy in `esp32-firmware`'s `storage` module, not
+//! attempt counter / wipe policy in `the firmware`'s `storage` module, not
 //! this KDF alone -- a short numeric PIN's entropy is too low for the KDF
 //! cost alone to matter much against an attacker who can extract the flash
 //! and brute-force offline.

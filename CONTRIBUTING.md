@@ -10,6 +10,7 @@ here than almost anywhere else in the project.
 cargo test --features seed-lock,transfer-crypto
 cargo clippy --features seed-lock,transfer-crypto --all-targets -- -D warnings
 cargo fmt --check
+cargo audit   # needs `cargo install cargo-audit`; run after `cargo generate-lockfile`
 ```
 
 Not `--all-features`: `hw-sha512` depends on `esp-idf-sys`, which only
@@ -38,8 +39,25 @@ opening a public issue.
 
 ## Commit messages
 
-Short, present-tense, explain *why* the change is needed when it's not
-obvious from the diff alone (e.g. "fix X because Y", not just "fix X").
+Use [Conventional Commits](https://www.conventionalcommits.org/)
+(`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`; add `!` or a
+`BREAKING CHANGE:` footer for breaking changes). release-plz derives the
+next version and `CHANGELOG.md` from them. Keep them short, present-tense,
+and explain *why* when it's not obvious from the diff.
+
+## Releases
+
+Releases are automated by [release-plz](https://release-plz.dev). On every
+push to `main` it opens/updates a release PR that bumps the version and
+changelog; merging that PR creates the `vX.Y.Z` tag and GitHub Release.
+Nothing is published to crates.io. Consumers pin by tag:
+
+```toml
+corisco-crypto-core = { git = "https://github.com/corisco-wallet/crypto-core", tag = "vX.Y.Z" }
+```
+
+Repo settings required: Actions > "Allow GitHub Actions to create and
+approve pull requests".
 
 ## Review
 

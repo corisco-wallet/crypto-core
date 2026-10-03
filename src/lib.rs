@@ -96,7 +96,7 @@ impl SparkKeyRoots {
 
 pub fn generate_mnemonic() -> Mnemonic {
     // 128 bits of entropy -> 12-word mnemonic. Host-only convenience
-    // wrapper: esp32-firmware calls `mnemonic_gen::generate_mnemonic_from_entropy`
+    // wrapper: the firmware calls `mnemonic_gen::generate_mnemonic_from_entropy`
     // directly with hardware-TRNG (`esp_fill_random`) entropy instead, since
     // getrandom's OS-backed source is host-only.
     let mut entropy = [0u8; 16];
@@ -116,7 +116,7 @@ pub fn generate_mnemonic() -> Mnemonic {
 /// which trips the ESP-IDF idle-task watchdog. The host tests never
 /// caught it since x86_64 does this natively and fast.
 ///
-/// With the `hw-sha512` feature (only enabled by esp32-firmware), the
+/// With the `hw-sha512` feature (only enabled by the firmware), the
 /// inner HMAC-SHA512 routes through ESP-IDF's mbedtls instead, which uses
 /// the ESP32-S3's hardware SHA accelerator peripheral.
 pub fn mnemonic_to_seed(mnemonic: &Mnemonic, passphrase: &str) -> [u8; 64] {

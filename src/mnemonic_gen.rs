@@ -1,4 +1,4 @@
-//! Mnemonic generation, split from its entropy source so `esp32-firmware`
+//! Mnemonic generation, split from its entropy source so `the firmware`
 //! can supply hardware-TRNG bytes (`esp_fill_random`) instead of pulling
 //! `getrandom`'s OS-backed source onto the device just for this.
 
