@@ -1,0 +1,5 @@
+/target
+
+# This is a library crate; consumers resolve their own dependency graph,
+# so the lockfile isn't committed (Rust convention for libs, unlike bins).
+Cargo.lock

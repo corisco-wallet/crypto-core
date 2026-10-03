@@ -1,0 +1,60 @@
+[package]
+name = "signer-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "Platform-agnostic crypto core for the Spark on-device signer. Builds and tests on a normal host; gets wrapped by esp32-firmware for the actual device."
+
+[dependencies]
+bip39 = { version = "2", default-features = false, features = ["std"] }
+hmac = "0.12"
+sha2 = "0.10"
+k256 = { version = "0.13", features = ["ecdsa", "schnorr", "arithmetic"] }
+hex = "0.4"
+zeroize = "1.7"
+thiserror = "1"
+base64ct = "=1.6.0"
+getrandom = "0.2"
+
+# Spark's FROST fork (adds "nested signing" on top of the ZcashFoundation
+# implementation). Not published to crates.io -- crates.io's
+# frost-secp256k1-tr is the plain upstream crate and lacks the
+# SigningPackage::new_with_adaptor / signing_participants_groups additions
+# Spark's signer actually uses. Pinned to a specific commit for
+# reproducibility.
+frost-secp256k1-tr = { git = "https://github.com/lightsparkdev/frost", rev = "997427e5c09e62459230ad711ef3a33fb64b9424" }
+# "internals" exposes Signature::new (normally pub(crate)) -- needed by
+# frost.rs's own adaptor-signature round-trip test to construct a
+# post-adaptor-application signature (R, s' + t) using frost-core's own
+# Scalar/Element types, without pulling in a second secp256k1 crate just for
+# a test. Not needed by the non-test signing/verification code paths.
+frost-core = { git = "https://github.com/lightsparkdev/frost", rev = "997427e5c09e62459230ad711ef3a33fb64b9424", features = ["internals"] }
+rand_core = { version = "0.6", features = ["getrandom"] }
+
+# Optional: routes PBKDF2's inner HMAC-SHA512 through ESP-IDF's mbedtls,
+# which uses the ESP32-S3's hardware SHA accelerator. Only ever enabled by
+# esp32-firmware; host builds/tests never pull this in.
+esp-idf-sys = { version = "0.37", optional = true }
+log = { version = "0.4", optional = true }
+
+# Optional: the leaf-ownership-transfer "key tweak" crypto (Feldman VSS
+# secret splitting + ECIES), matching Spark's own reference implementation
+# (`signer/spark-frost/src/vss.rs` and `bridge.rs` in buildonspark/spark)
+# so shares/ciphertexts this produces are accepted by real Signing
+# Operators. Gated behind a feature since not every consumer of this crate
+# needs it.
+vsss-rs = { version = "5", default-features = false, features = ["alloc", "primitive"], optional = true }
+ecies = { version = "0.2.11", default-features = false, features = ["aes-rust"], optional = true }
+
+# Optional: AES-256-GCM for at-rest encryption of the seed behind a PIN
+# (see seed_lock.rs). Gated behind a feature so consumers that don't need
+# on-device storage don't pull it in.
+aes-gcm = { version = "0.10", default-features = false, features = ["aes", "alloc"], optional = true }
+
+[features]
+hw-sha512 = ["dep:esp-idf-sys", "dep:log"]
+transfer-crypto = ["dep:vsss-rs", "dep:ecies"]
+seed-lock = ["dep:aes-gcm"]
+
+[dev-dependencies]
+hex-literal = "0.4"
