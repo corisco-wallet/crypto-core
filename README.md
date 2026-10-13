@@ -1,5 +1,7 @@
 # crypto-core
 
+The signing code that runs on the Corisco hardware device. You don't need this to use the wallet; it's for developers.
+
 Platform-agnostic signing logic for [corisco-firmware](https://github.com/corisco-wallet/corisco-firmware)'s
 ESP32 hardware signer: BIP32 derivation, BIP39 mnemonic handling, ECDSA/
 Schnorr signing, FROST threshold signing, and the leaf-ownership-transfer
