@@ -69,6 +69,28 @@ fn derive_pin_key(pin: &str, salt: &[u8; 16], iterations: u32) -> [u8; 32] {
     result
 }
 
+const DEVICE_BINDING_CONTEXT: &[u8] = b"corisco/seed-lock/device-bound/v1";
+
+/// Mixes a per-device secret into the PIN-derived key, so a flash dump alone
+/// can't be brute-forced offline.
+fn bind_to_device(pin_key: [u8; 32], device_secret: &[u8; 32]) -> [u8; 32] {
+    let mut mac = <HmacSha256 as Mac>::new_from_slice(device_secret)
+        .expect("HMAC accepts keys of any length");
+    mac.update(DEVICE_BINDING_CONTEXT);
+    mac.update(&pin_key);
+    mac.finalize().into_bytes().into()
+}
+
+fn seal_key(pin: &str, salt: &[u8; 16], device_secret: Option<&[u8; 32]>) -> [u8; 32] {
+    let mut pin_key = derive_pin_key(pin, salt, PIN_KDF_ITERATIONS);
+    let key = match device_secret {
+        Some(secret) => bind_to_device(pin_key, secret),
+        None => pin_key,
+    };
+    pin_key.zeroize();
+    key
+}
+
 /// Encrypts `seed` under a key derived from `pin`, using caller-supplied
 /// random `salt`/`nonce` -- kept explicit (rather than generated
 /// internally) so this module stays platform-agnostic: callers supply
@@ -81,7 +103,19 @@ pub fn encrypt_seed_with_randomness(
     salt: [u8; 16],
     nonce: [u8; 12],
 ) -> EncryptedSeed {
-    let mut key_bytes = derive_pin_key(pin, &salt, PIN_KDF_ITERATIONS);
+    encrypt_seed_bound(seed, pin, None, salt, nonce)
+}
+
+/// Like `encrypt_seed_with_randomness`, additionally keyed by a per-device
+/// secret that never leaves the chip.
+pub fn encrypt_seed_bound(
+    seed: &[u8; 64],
+    pin: &str,
+    device_secret: Option<&[u8; 32]>,
+    salt: [u8; 16],
+    nonce: [u8; 12],
+) -> EncryptedSeed {
+    let mut key_bytes = seal_key(pin, &salt, device_secret);
     let cipher = Aes256Gcm::new(&Key::<Aes256Gcm>::from(key_bytes));
     key_bytes.zeroize();
 
@@ -101,7 +135,16 @@ pub fn encrypt_seed_with_randomness(
 /// needed, an authenticated cipher's tag mismatch already tells you "wrong
 /// key or corrupted data".
 pub fn decrypt_seed(enc: &EncryptedSeed, pin: &str) -> Result<[u8; 64], SeedLockError> {
-    let mut key_bytes = derive_pin_key(pin, &enc.salt, PIN_KDF_ITERATIONS);
+    decrypt_seed_bound(enc, pin, None)
+}
+
+/// Inverse of `encrypt_seed_bound`; `device_secret` must match the one used to encrypt.
+pub fn decrypt_seed_bound(
+    enc: &EncryptedSeed,
+    pin: &str,
+    device_secret: Option<&[u8; 32]>,
+) -> Result<[u8; 64], SeedLockError> {
+    let mut key_bytes = seal_key(pin, &enc.salt, device_secret);
     let cipher = Aes256Gcm::new(&Key::<Aes256Gcm>::from(key_bytes));
     key_bytes.zeroize();
 
@@ -142,6 +185,24 @@ mod tests {
             decrypt_seed(&enc, "000000"),
             Err(SeedLockError::DecryptionFailed)
         ));
+    }
+
+    #[test]
+    fn bound_seed_round_trips_only_with_the_same_device_secret() {
+        let seed = test_seed();
+        let secret = [0xAB; 32];
+        let enc = encrypt_seed_bound(&seed, "123456", Some(&secret), [0x11; 16], [0x22; 12]);
+        assert_eq!(decrypt_seed_bound(&enc, "123456", Some(&secret)).unwrap(), seed);
+        assert!(decrypt_seed_bound(&enc, "123456", Some(&[0xCD; 32])).is_err());
+        assert!(decrypt_seed_bound(&enc, "123456", None).is_err());
+        assert!(decrypt_seed(&enc, "123456").is_err());
+    }
+
+    #[test]
+    fn unbound_seed_does_not_decrypt_with_a_device_secret() {
+        let seed = test_seed();
+        let enc = encrypt_seed_with_randomness(&seed, "123456", [0x11; 16], [0x22; 12]);
+        assert!(decrypt_seed_bound(&enc, "123456", Some(&[0xAB; 32])).is_err());
     }
 
     #[test]
