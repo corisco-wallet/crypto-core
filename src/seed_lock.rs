@@ -192,7 +192,10 @@ mod tests {
         let seed = test_seed();
         let secret = [0xAB; 32];
         let enc = encrypt_seed_bound(&seed, "123456", Some(&secret), [0x11; 16], [0x22; 12]);
-        assert_eq!(decrypt_seed_bound(&enc, "123456", Some(&secret)).unwrap(), seed);
+        assert_eq!(
+            decrypt_seed_bound(&enc, "123456", Some(&secret)).unwrap(),
+            seed
+        );
         assert!(decrypt_seed_bound(&enc, "123456", Some(&[0xCD; 32])).is_err());
         assert!(decrypt_seed_bound(&enc, "123456", None).is_err());
         assert!(decrypt_seed(&enc, "123456").is_err());
